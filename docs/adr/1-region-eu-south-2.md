@@ -1,4 +1,4 @@
-# ADR 1: Use eu-south-2 (Spain) as the primary AWS region
+# ADR 0001: Use eu-south-2 (Spain) as the primary AWS region
 
 ## Status
 
