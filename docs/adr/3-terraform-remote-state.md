@@ -32,3 +32,4 @@ Terraform needs a place to store its state. A local state file is easy to lose, 
 - Access logging is missing until the central logging bucket exists. The `CKV_AWS_18` skip must be removed in phase 3.
 - Every new Terraform folder must be added to the pre-commit validate script and to the Dependabot configuration.
 - Account IDs and the access portal URL are not committed to the repository.
+- Native locking was tested in dev with two simultaneous plan runs. The second run failed with a state lock error, as expected.
