@@ -1,0 +1,21 @@
+repos:
+  - repo: local
+    hooks:
+      - id: terraform-fmt
+        name: terraform fmt
+        entry: terraform fmt -recursive infra
+        language: system
+        pass_filenames: false
+        files: \.tf$
+      - id: terraform-validate
+        name: terraform validate
+        entry: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/tf-validate.ps1
+        language: system
+        pass_filenames: false
+        files: \.tf$
+
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.4.4
+    hooks:
+      - id: checkov
+        args: [--framework, terraform, --quiet, --compact]

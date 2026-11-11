@@ -3,6 +3,10 @@ locals {
 }
 
 resource "aws_s3_bucket" "tfstate" {
+  #checkov:skip=CKV_AWS_18:Central logging bucket is planned for phase 3
+  #checkov:skip=CKV_AWS_144:Cross-region replication is planned for phase 9 for data buckets
+  #checkov:skip=CKV_AWS_145:SSE-S3 is enough for the state bucket and KMS adds cost
+  #checkov:skip=CKV2_AWS_62:No process consumes events from the state bucket
   bucket = local.bucket_name
 
   lifecycle {
