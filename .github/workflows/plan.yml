@@ -1,0 +1,63 @@
+name: plan
+
+on:
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: plan-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: plan-${{ matrix.env }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [dev, prod]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ matrix.env == 'dev' && vars.AWS_PLAN_ROLE_ARN_DEV || vars.AWS_PLAN_ROLE_ARN_PROD }}
+          aws-region: eu-south-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.1"
+          terraform_wrapper: false
+
+      - name: Init
+        run: terraform -chdir=infra/envs/${{ matrix.env }} init -input=false
+
+      - name: Plan
+        run: |
+          terraform -chdir=infra/envs/${{ matrix.env }} plan -input=false -no-color -lock-timeout=60s -out=tfplan
+          terraform -chdir=infra/envs/${{ matrix.env }} show -no-color tfplan > plan.txt
+
+      - name: Comment plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let plan = fs.readFileSync('plan.txt', 'utf8');
+            plan = plan.replace(/\b\d{12}\b/g, '************');
+            if (plan.length > 60000) plan = plan.slice(0, 60000) + '\n... truncated ...';
+            const marker = '<!-- tf-plan-${{ matrix.env }} -->';
+            const body = marker + '\n### Terraform plan: ${{ matrix.env }}\n```\n' + plan + '\n```';
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }

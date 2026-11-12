@@ -12,15 +12,13 @@ terraform {
     bucket       = "sv-tfstate-prod-safouan"
     key          = "envs/prod/terraform.tfstate"
     region       = "eu-south-2"
-    profile      = "sv-prod"
     encrypt      = true
     use_lockfile = true
   }
 }
 
 provider "aws" {
-  region  = "eu-south-2"
-  profile = "sv-prod"
+  region = "eu-south-2"
 
   default_tags {
     tags = {

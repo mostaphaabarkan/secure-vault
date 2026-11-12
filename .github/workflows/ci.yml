@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.1"
+
+      - name: Format check
+        run: terraform fmt -check -recursive -diff infra
+
+      - name: Validate
+        run: |
+          for f in $(find infra -name versions.tf -not -path '*/.terraform/*'); do
+            dir=$(dirname "$f")
+            echo "== $dir"
+            terraform -chdir="$dir" init -backend=false -input=false
+            terraform -chdir="$dir" validate
+          done
+
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Run Checkov
+        run: |
+          pip install checkov
+          checkov -d infra --framework terraform --compact --quiet
