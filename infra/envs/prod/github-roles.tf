@@ -1,5 +1,5 @@
 locals {
-  github_repo = "mostaphaabarkan/secure-vault"
+  github_repo = "mostaphaabarkan@124899963/secure-vault@1452849940"
 }
 
 data "aws_iam_policy_document" "plan_trust" {
