@@ -23,6 +23,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Debug OIDC claims (temporary)
+        run: |
+          echo "dev var ok: ${{ startsWith(vars.AWS_PLAN_ROLE_ARN_DEV, 'arn:aws:iam::') && endsWith(vars.AWS_PLAN_ROLE_ARN_DEV, ':role/gha-terraform-plan') }}"
+          echo "prod var ok: ${{ startsWith(vars.AWS_PLAN_ROLE_ARN_PROD, 'arn:aws:iam::') && endsWith(vars.AWS_PLAN_ROLE_ARN_PROD, ':role/gha-terraform-plan') }}"
+          python3 - <<'EOF'
+          import os, json, base64, urllib.request
+          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=sts.amazonaws.com"
+          req = urllib.request.Request(url, headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]})
+          token = json.load(urllib.request.urlopen(req))["value"]
+          payload = token.split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          print({k: claims.get(k) for k in ("sub", "aud", "repository", "event_name")})
+          EOF
+
       - uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           role-to-assume: ${{ matrix.env == 'dev' && vars.AWS_PLAN_ROLE_ARN_DEV || vars.AWS_PLAN_ROLE_ARN_PROD }}
@@ -36,28 +51,4 @@ jobs:
       - name: Init
         run: terraform -chdir=infra/envs/${{ matrix.env }} init -input=false
 
-      - name: Plan
-        run: |
-          terraform -chdir=infra/envs/${{ matrix.env }} plan -input=false -no-color -lock-timeout=60s -out=tfplan
-          terraform -chdir=infra/envs/${{ matrix.env }} show -no-color tfplan > plan.txt
-
-      - name: Comment plan on PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let plan = fs.readFileSync('plan.txt', 'utf8');
-            plan = plan.replace(/\b\d{12}\b/g, '************');
-            if (plan.length > 60000) plan = plan.slice(0, 60000) + '\n... truncated ...';
-            const marker = '<!-- tf-plan-${{ matrix.env }} -->';
-            const body = marker + '\n### Terraform plan: ${{ matrix.env }}\n```\n' + plan + '\n```';
-            const { data: comments } = await github.rest.issues.listComments({
-              ...context.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.startsWith(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
-            } else {
-              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
-            }
+      -
