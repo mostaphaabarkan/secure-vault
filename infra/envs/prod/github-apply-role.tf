@@ -28,5 +28,6 @@ resource "aws_iam_role" "gha_terraform_apply" {
 }
 
 output "gha_terraform_apply_role_arn" {
-  value = aws_iam_role.gha_terraform_apply.arn
+  value     = aws_iam_role.gha_terraform_apply.arn
+  sensitive = true
 }
