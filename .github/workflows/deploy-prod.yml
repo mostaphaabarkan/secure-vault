@@ -1,0 +1,39 @@
+name: deploy-prod
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infra/envs/prod/**"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: terraform-prod
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-south-2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.17.1"
+          terraform_wrapper: false
+
+      - name: Init
+        run: terraform -chdir=infra/envs/prod init -input=false
+
+      - name: Apply
+        run: terraform -chdir=infra/envs/prod apply -input=false -auto-approve -lock-timeout=60s
