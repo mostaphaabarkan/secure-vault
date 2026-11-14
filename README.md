@@ -111,3 +111,14 @@ flowchart LR
 - **Least privilege.** The plan role is read-only plus the state lock file. The apply role can only read the account and write its own state. It cannot create resources or change IAM yet, so permissions are added per phase.
 - **IAM stays manual.** The OIDC provider and pipeline roles are applied from a developer machine with SSO, never from the pipeline.
 - **Private by default.** Role ARNs are marked `sensitive`, and plan comments hide 12-digit account IDs.
+
+## How to log in
+
+AWS access uses IAM Identity Center (SSO). There are no IAM users and no access keys.
+
+```powershell
+aws sso login --profile sv-dev
+aws sts get-caller-identity --profile sv-dev
+```
+
+Check that the account matches the environment before you run Terraform. Account IDs are not stored in this repository. Each profile needs `sso_session`, `sso_account_id` and `sso_role_name`, and all profiles share one `[sso-session]` block with the SSO start URL and region `eu-south-2`. See [ADR 2](docs/adr/2-sso-identity-center.md).
