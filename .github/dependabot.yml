@@ -4,6 +4,8 @@ updates:
     directories:
       - "/infra/bootstrap"
       - "/infra/bootstrap-prod"
+      - "/infra/envs/dev"
+      - "/infra/envs/prod"
     schedule:
       interval: "weekly"
     labels: ["dependencies"]
