@@ -23,21 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Debug OIDC claims (temporary)
-        run: |
-          echo "dev var ok: ${{ startsWith(vars.AWS_PLAN_ROLE_ARN_DEV, 'arn:aws:iam::') && endsWith(vars.AWS_PLAN_ROLE_ARN_DEV, ':role/gha-terraform-plan') }}"
-          echo "prod var ok: ${{ startsWith(vars.AWS_PLAN_ROLE_ARN_PROD, 'arn:aws:iam::') && endsWith(vars.AWS_PLAN_ROLE_ARN_PROD, ':role/gha-terraform-plan') }}"
-          python3 - <<'EOF'
-          import os, json, base64, urllib.request
-          url = os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"] + "&audience=sts.amazonaws.com"
-          req = urllib.request.Request(url, headers={"Authorization": "bearer " + os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]})
-          token = json.load(urllib.request.urlopen(req))["value"]
-          payload = token.split(".")[1]
-          payload += "=" * (-len(payload) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(payload))
-          print({k: claims.get(k) for k in ("sub", "aud", "repository", "event_name")})
-          EOF
-
       - uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           role-to-assume: ${{ matrix.env == 'dev' && vars.AWS_PLAN_ROLE_ARN_DEV || vars.AWS_PLAN_ROLE_ARN_PROD }}
