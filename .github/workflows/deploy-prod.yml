@@ -27,6 +27,9 @@ jobs:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: eu-south-2
 
+      - name: Mask account ID
+        run: echo "::add-mask::$(aws sts get-caller-identity --query Account --output text)"
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.17.1"
