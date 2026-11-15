@@ -134,3 +134,7 @@ Each environment has its own encrypted storage, created by the pipeline from `in
 | DynamoDB table | `sv-files-<env>`           | File metadata and scan status, point-in-time recovery  |
 
 The pipeline can create these resources but cannot read or decrypt stored files. See [ADR 5](docs/adr/5-data-layer.md).
+
+## Authentication
+
+Users sign in with Amazon Cognito (one user pool per environment). Sign-up is disabled: an administrator invites each user by email. MFA with an authenticator app is mandatory. The app client is public and uses the authorization code flow. The pipeline can create the pool but cannot create users or set passwords. See [ADR 6](docs/adr/6-cognito-auth.md).
