@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@v6.2.3
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           role-to-assume: ${{ matrix.env == 'dev' && vars.AWS_PLAN_ROLE_ARN_DEV || vars.AWS_PLAN_ROLE_ARN_PROD }}
           aws-region: eu-south-2
