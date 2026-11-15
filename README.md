@@ -122,3 +122,15 @@ aws sts get-caller-identity --profile sv-dev
 ```
 
 Check that the account matches the environment before you run Terraform. Account IDs are not stored in this repository. Each profile needs `sso_session`, `sso_account_id` and `sso_role_name`, and all profiles share one `[sso-session]` block with the SSO start URL and region `eu-south-2`. See [ADR 2](docs/adr/2-sso-identity-center.md).
+
+## Data layer
+
+Each environment has its own encrypted storage, created by the pipeline from `infra/envs/<env>/`:
+
+| Resource       | Name                       | Purpose                                                |
+| -------------- | -------------------------- | ------------------------------------------------------ |
+| KMS key        | `alias/sv-uploads`         | Encrypts the bucket and the table, rotation enabled    |
+| S3 bucket      | `sv-uploads-<env>-safouan` | Uploaded files: private, versioned, encrypted with KMS |
+| DynamoDB table | `sv-files-<env>`           | File metadata and scan status, point-in-time recovery  |
+
+The pipeline can create these resources but cannot read or decrypt stored files. See [ADR 5](docs/adr/5-data-layer.md).
