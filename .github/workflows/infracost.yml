@@ -21,7 +21,7 @@ jobs:
 
       - name: Cost breakdown
         run: |
-          infracost breakdown --path infra/bootstrap --format json --out-file /tmp/infracost.json
+          infracost breakdown --path infra/envs/dev --path infra/envs/prod --format json --out-file /tmp/infracost.json
 
       - name: Comment on PR
         run: |
